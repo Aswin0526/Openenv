@@ -22,7 +22,7 @@ from my_env.models import WarehouseAction
 # ── Configuration ─────────────────────────────────────────────────────
 IMAGE_NAME = os.getenv("IMAGE_NAME")
 API_KEY = os.getenv("API_KEY") or os.getenv("HF_TOKEN")
-API_BASE_URL = os.getenv("API_BASE_URL", "<your-active-endpoint>")
+API_BASE_URL = os.getenv("API_BASE_URL")
 MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
 TASK_NAME = os.getenv("WAREHOUSE_TASK", "easy")
 BENCHMARK = os.getenv("WAREHOUSE_BENCHMARK", "warehouse_env")
@@ -30,6 +30,18 @@ MAX_STEPS = int(os.getenv("MAX_STEPS", "20"))
 TEMPERATURE = float(os.getenv("TEMPERATURE", "0.3"))
 MAX_TOKENS = int(os.getenv("MAX_TOKENS", "256"))
 SUCCESS_SCORE_THRESHOLD = 0.5
+
+
+def _validate_env_vars() -> None:
+    missing = []
+    if not API_BASE_URL:
+        missing.append("API_BASE_URL")
+    if not API_KEY:
+        missing.append("API_KEY")
+    if missing:
+        raise RuntimeError(
+            f"Missing required environment variables: {', '.join(missing)}"
+        )
 
 SYSTEM_PROMPT = textwrap.dedent("""
 You are an expert warehouse placement agent.
@@ -146,8 +158,6 @@ def _greedy_fallback(obs: dict, mode: str) -> list:
 # ── Main episode loop ─────────────────────────────────────────────────
 
 async def run_episode(task_mode: str) -> None:
-    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
-
     history: List[str] = []
     rewards: List[float] = []
     steps_taken = 0
@@ -155,6 +165,13 @@ async def run_episode(task_mode: str) -> None:
     success = False
 
     log_start(task=task_mode, env=BENCHMARK, model=MODEL_NAME)
+    try:
+        _validate_env_vars()
+        client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
+    except Exception as exc:
+        print(f"[DEBUG] OpenAI initialization failed: {exc}", flush=True)
+        log_end(success=False, steps=steps_taken, score=score, rewards=rewards)
+        return
 
     base_url = os.getenv("WAREHOUSE_SERVER_URL", "http://localhost:8000")
 

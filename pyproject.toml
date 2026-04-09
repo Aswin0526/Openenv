@@ -24,7 +24,7 @@ dependencies = [
 ]
 
 [project.scripts]
-serve = "server.app:app"
+serve = "server.app:main"
 
 [tool.setuptools.packages.find]
 include = ["my_env*", "server*"]

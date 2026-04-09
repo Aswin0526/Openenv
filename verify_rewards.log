@@ -1,0 +1,19 @@
+=== EASY MODE ===
+  isolated     at [0, 0]     -> reward=0.1000
+  adj          at [0, 1]     -> reward=0.3250
+  adj          at [0, 2]     -> reward=0.3250
+  isolated     at [3, 0]     -> reward=0.1000
+  1 neighbor   at [3, 1]     -> reward=0.3250
+
+=== MEDIUM MODE ===
+  Hammer       at [0, 0]     -> reward=0.2100
+  Nails(rel)   at [0, 1]     -> reward=0.3800
+  Screwdriver  at [5, 5]     -> reward=0.2100
+  Screws(rel)  at [5, 4]     -> reward=0.3800
+
+=== HARD MODE ===
+  Vase(frag)OK    at [1, 1, 2]    -> reward=0.5900
+  Plate(frag)BAD  at [2, 2, 0]    -> reward=0.3933
+  FuelCan OK      at [2, 1, 0]    -> reward=0.6233
+  Propane BAD     at [0, 0, 0]    -> reward=0.4083
+  Steel OK        at [1, 0, 0]    -> reward=0.6833

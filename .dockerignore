@@ -1,0 +1,9 @@
+.git
+__pycache__
+*.pyc
+*.pyo
+my_env/__pycache__
+my_env/server/__pycache__
+my_env/outputs/
+*.log
+.env

@@ -1,0 +1,164 @@
+﻿======================================================================
+  EASY MODE ù 5╫5 2D Grid, 5 Simple Boxes, Blocked Cells
+======================================================================
+
+[POST /start]
+{
+  "mode": "easy",
+  "grid_shape": [
+    5,
+    5
+  ],
+  "total_products": 5,
+  "max_steps": 20,
+  "description": "Place boxes on a 2D grid. Avoid fragmentation.",
+  "status": "configured \u2014 call /reset to begin"
+}
+
+[POST /reset] Initial grid:
+  [0, 0, 0, 0, 0]
+  [0, -1, 0, 0, 0]
+  [0, 0, 0, -1, 0]
+  [0, 0, 0, 0, 0]
+  [0, 0, -1, 0, 0]
+  Blocked cells: [[1, 1], [2, 3], [4, 2]]
+  Current product: {'id': 1, 'name': 'Box A'}
+  Products remaining: 5
+
+[POST /step] Place at [0,0]: Placed 'Box A' (id=1) at [0, 0].  reward=0.0000
+  Grid:
+    [1, 0, 0, 0, 0]
+    [0, -1, 0, 0, 0]
+    [0, 0, 0, -1, 0]
+    [0, 0, 0, 0, 0]
+    [0, 0, -1, 0, 0]
+
+[POST /step] Try blocked [1,1]: Position [1, 1] is blocked. Choose an empty cell.  reward=0.0000
+[POST /step] Place at [0,1]: Placed 'Box B' (id=2) at [0, 1].  reward=0.2000
+
+[GET /state] Steps=3  Placed=2  Remaining=3
+
+
+======================================================================
+  MEDIUM MODE ù 6╫6 2D Grid, 10 Products, Adjacency Constraints
+======================================================================
+
+[POST /start]
+{
+  "mode": "medium",
+  "grid_shape": [
+    6,
+    6
+  ],
+  "total_products": 10,
+  "max_steps": 40,
+  "description": "Place products while respecting adjacency constraints.",
+  "status": "configured \u2014 call /reset to begin"
+}
+
+[POST /reset] Initial grid:
+  [0, 0, 0, 0, 0, 0]
+  [0, 0, 0, 0, 0, 0]
+  [0, 0, 0, 0, 0, 0]
+  [0, 0, 0, 0, 0, 0]
+  [0, 0, 0, 0, 0, 0]
+  [0, 0, 0, 0, 0, 0]
+  Current product: {'id': 1, 'name': 'Hammer', 'category': 'tools'}
+  Products remaining: 10
+  Adjacency constraints: [[1, 2], [3, 4], [5, 6], [5, 7], [8, 9], [1, 10]]
+  Related products for current: [{'id': 2, 'name': 'Nails', 'category': 'tools'}, {'id': 10, 'name': 'Measuring Tape', 'category': 'tools'}]
+
+[POST /step] Place Hammer at [0,0]: Placed 'Hammer' (id=1) at [0, 0].  reward=0.2100
+  Next product: {'id': 2, 'name': 'Nails', 'category': 'tools'}
+  Related products for Nails: [{'id': 1, 'name': 'Hammer', 'category': 'tools'}]
+
+[POST /step] Place Nails at [0,1] (adjacent to Hammer): Placed 'Nails' (id=2) at [0, 1].  reward=0.3800
+  Grid after 2 placements:
+    [1, 2, 0, 0, 0, 0]
+    [0, 0, 0, 0, 0, 0]
+    [0, 0, 0, 0, 0, 0]
+    [0, 0, 0, 0, 0, 0]
+    [0, 0, 0, 0, 0, 0]
+    [0, 0, 0, 0, 0, 0]
+
+[GET /state] Steps=2  Placed=2  Remaining=8
+  Placed products: [('Hammer', [0, 0]), ('Nails', [0, 1])]
+
+
+======================================================================
+  HARD MODE ù 4╫4╫3 (3D), 12 Products, Safety + Zone Constraints
+======================================================================
+
+[POST /start]
+{
+  "mode": "hard",
+  "grid_shape": [
+    4,
+    4,
+    3
+  ],
+  "total_products": 12,
+  "max_steps": 60,
+  "description": "3D warehouse with safety, size, and zone constraints.",
+  "status": "configured \u2014 call /reset to begin"
+}
+
+[POST /reset] Initial 3D grid (3 levels):
+  Level 0:
+    [0, 0, 0, 0]
+    [0, 0, 0, 0]
+    [0, 0, 0, 0]
+    [0, 0, 0, 0]
+  Level 1:
+    [0, 0, 0, 0]
+    [0, 0, 0, 0]
+    [0, 0, 0, 0]
+    [0, 0, 0, 0]
+  Level 2:
+    [0, 0, 0, 0]
+    [0, 0, 0, 0]
+    [0, 0, 0, 0]
+    [0, 0, 0, 0]
+
+  Current product: {'id': 1, 'name': 'Glass Vase', 'size': 'small', 'fragile': True, 'flammable': False}
+  Products remaining: 12
+  Heat zones: [[0, 0, 0], [0, 1, 0], [0, 0, 1], [0, 1, 1]]
+  Electrical zones: [[3, 3, 0], [3, 2, 0], [3, 3, 1], [3, 2, 1]]
+  Safety rules:
+    - Fragile items -> top rack (level 2)
+    - Flammable items -> away from heat zones and electrical zones
+    - Big items -> bottom rack (level 0)
+    - Flammable and non-flammable items must be separated
+
+[POST /step] Place Glass Vase at [1,1,2] (top rack): Placed 'Glass Vase' (id=1) at [1, 1, 2].  reward=0.5900
+[POST /step] Place Ceramic Plate Set at [2,2,0]: Placed 'Ceramic Plate Set' (id=2) at [2, 2, 0].  reward=0.3933
+[POST /step] Place Fuel Can at [2,1,0] (away from zones): Placed 'Fuel Can' (id=3) at [2, 1, 0].  reward=0.6233
+
+  3D Grid after placements:
+  Level 0:
+    [0, 0, 0, 0]
+    [0, 0, 0, 0]
+    [0, 3, 2, 0]
+    [0, 0, 0, 0]
+  Level 1:
+    [0, 0, 0, 0]
+    [0, 0, 0, 0]
+    [0, 0, 0, 0]
+    [0, 0, 0, 0]
+  Level 2:
+    [0, 0, 0, 0]
+    [0, 1, 0, 0]
+    [0, 0, 0, 0]
+    [0, 0, 0, 0]
+
+[GET /state] Steps=3  Placed=3  Remaining=9
+  Placed: [('Glass Vase', [1, 1, 2]), ('Ceramic Plate Set', [2, 2, 0]), ('Fuel Can', [2, 1, 0])]
+
+
+======================================================================
+  SUMMARY ù Each mode ran as a completely independent episode
+======================================================================
+  Easy:   5╫5 grid  | 5 boxes   | blocked cells only
+  Medium: 6╫6 grid  | 10 items  | + adjacency constraints
+  Hard:   4╫4╫3 3D  | 12 items  | + size/fragile/flammable + zones
+  Rewards: Computed per step, normalized [0.0, 1.0]

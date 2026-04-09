@@ -21,9 +21,9 @@ from my_env.models import WarehouseAction
 
 # ── Configuration ─────────────────────────────────────────────────────
 IMAGE_NAME = os.getenv("IMAGE_NAME")
-API_KEY = os.environ["API_KEY"]
+API_KEY = os.getenv("API_KEY") or os.getenv("HF_TOKEN")
 API_BASE_URL = os.getenv("API_BASE_URL", "<your-active-endpoint>")
-MODEL_NAME = os.environ["MODEL_NAME"]
+MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
 TASK_NAME = os.getenv("WAREHOUSE_TASK", "easy")
 BENCHMARK = os.getenv("WAREHOUSE_BENCHMARK", "warehouse_env")
 MAX_STEPS = int(os.getenv("MAX_STEPS", "20"))

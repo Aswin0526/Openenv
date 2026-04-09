@@ -1,0 +1,31 @@
+# OpenEnv Environment Manifest
+
+name: warehouse_env
+version: "0.1.0"
+description: "Warehouse Load Distribution Environment"
+
+author: "Your Name"
+license: "MIT"
+
+# Task modes
+tasks:
+  - easy
+  - medium
+  - hard
+
+# Server configuration
+server:
+  dockerfile: server/Dockerfile
+  port: 8000
+  health_check: /health
+
+# Client configuration
+client:
+  module: my_env
+  class: WarehouseEnv
+
+# Models
+models:
+  action: my_env.models.WarehouseAction
+  observation: my_env.models.WarehouseObservation
+  state: my_env.models.WarehouseState

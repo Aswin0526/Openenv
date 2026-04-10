@@ -111,10 +111,10 @@ def build_user_prompt(obs: dict, step: int, history: List[str]) -> str:
 def get_action(client: OpenAI, obs: dict, step: int, history: List[str], mode: str) -> list:
     """Ask the LLM for a placement position. Falls back to greedy on failure."""
     import json
-    import copy
 
     user_prompt = build_user_prompt(obs, step, history)
     try:
+        # Crucial: Use the client passed from main which is tied to the Proxy
         completion = client.chat.completions.create(
             model=MODEL_NAME,
             messages=[
@@ -123,19 +123,19 @@ def get_action(client: OpenAI, obs: dict, step: int, history: List[str], mode: s
             ],
             temperature=TEMPERATURE,
             max_tokens=MAX_TOKENS,
-            stream=False,
         )
         text = (completion.choices[0].message.content or "").strip()
-        # Parse JSON array from response
-        position = json.loads(text)
+        
+        # Clean potential markdown if the model ignores the "No Markdown" rule
+        clean_text = text.replace("```json", "").replace("```", "").strip()
+        
+        position = json.loads(clean_text)
         if isinstance(position, list) and len(position) in (2, 3):
             return [int(x) for x in position]
     except Exception as exc:
-        print(f"[DEBUG] LLM parse failed: {exc}", flush=True)
+        print(f"[DEBUG] LLM proxy call failed or parse failed: {exc}", flush=True)
 
-    # Greedy fallback: pick first empty cell
     return _greedy_fallback(obs, mode)
-
 
 def _greedy_fallback(obs: dict, mode: str) -> list:
     """Return the first available empty cell."""
@@ -164,12 +164,24 @@ async def run_episode(task_mode: str) -> None:
     success = False
 
     log_start(task=task_mode, env=BENCHMARK, model=MODEL_NAME)
+    
+    # RECTIFIED: Strict check for Proxy Variables
+    proxy_url = os.getenv("API_BASE_URL")
+    proxy_key = os.getenv("API_KEY")
+
+    if not proxy_url or not proxy_key:
+        print("[DEBUG] CRITICAL: API_BASE_URL or API_KEY not found in environment.")
+        log_end(success=False, steps=0, score=0, rewards=[])
+        return
+
     try:
-        _validate_env_vars()
-        client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
+        # Initialize client strictly with the proxy details
+        client = OpenAI(
+            base_url=proxy_url,
+            api_key=proxy_key
+        )
     except Exception as exc:
-        print(f"[DEBUG] OpenAI initialization failed: {exc}", flush=True)
-        log_end(success=False, steps=steps_taken, score=score, rewards=rewards)
+        print(f"[DEBUG] Client initialization failed: {exc}")
         return
 
     base_url = os.getenv("WAREHOUSE_SERVER_URL", "http://localhost:8000")
@@ -178,17 +190,23 @@ async def run_episode(task_mode: str) -> None:
         try:
             await env.start(mode=task_mode)
             obs_obj = await env.reset()
-            obs = obs_obj.__dict__
+            # Handle if obs_obj is already a dict or needs __dict__
+            obs = obs_obj.__dict__ if hasattr(obs_obj, "__dict__") else obs_obj
 
             for step in range(1, MAX_STEPS + 1):
                 if obs.get("done", False):
                     break
 
+                # Pass the validated client
                 position = get_action(client, obs, step, history, task_mode)
                 action = WarehouseAction(position=position)
 
                 result = await env.step(action)
-                obs = result["observation"].__dict__
+                
+                # Extract observation safely
+                obs_data = result.get("observation")
+                obs = obs_data.__dict__ if hasattr(obs_data, "__dict__") else obs_data
+                
                 reward = result.get("reward", 0.0) or 0.0
                 done = result.get("done", False)
                 error = obs.get("message") if reward < 0 else None
@@ -196,21 +214,14 @@ async def run_episode(task_mode: str) -> None:
                 rewards.append(reward)
                 steps_taken = step
 
-                log_step(
-                    step=step,
-                    action=str(position),
-                    reward=reward,
-                    done=done,
-                    error=error,
-                )
+                log_step(step=step, action=str(position), reward=reward, done=done, error=error)
                 history.append(f"Step {step}: pos={position} reward={reward:+.2f}")
 
                 if done:
                     break
 
-            # Normalize score: sum of rewards / max possible
             max_reward = steps_taken * 1.0 if steps_taken > 0 else 1.0
-            score = sum(rewards) / max_reward if max_reward > 0 else 0.0
+            score = sum(rewards) / max_reward
             score = min(max(score, 0.0), 1.0)
             success = score >= SUCCESS_SCORE_THRESHOLD
 
@@ -218,7 +229,6 @@ async def run_episode(task_mode: str) -> None:
             print(f"[DEBUG] Episode error: {exc}", flush=True)
         finally:
             log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
-
 
 async def main() -> None:
     await run_episode(TASK_NAME)

@@ -22,8 +22,8 @@ from my_env.models import WarehouseAction
 # ── Configuration ─────────────────────────────────────────────────────
 IMAGE_NAME = os.getenv("IMAGE_NAME")
 API_KEY = os.getenv("API_KEY") or os.getenv("HF_TOKEN")
-API_BASE_URL = os.getenv("API_BASE_URL")
-MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
+API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
+MODEL_NAME = os.getenv("MODEL_NAME") or "Qwen/Qwen2.5-72B-Instruct"
 TASK_NAME = os.getenv("WAREHOUSE_TASK", "easy")
 BENCHMARK = os.getenv("WAREHOUSE_BENCHMARK", "warehouse_env")
 MAX_STEPS = int(os.getenv("MAX_STEPS", "20"))
@@ -62,7 +62,6 @@ No explanation, no markdown, just the array.
 
 
 # ── Logging helpers ───────────────────────────────────────────────────
-
 def log_start(task: str, env: str, model: str) -> None:
     print(f"[START] task={task} env={env} model={model}", flush=True)
 

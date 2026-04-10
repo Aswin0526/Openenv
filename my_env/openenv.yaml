@@ -4,14 +4,28 @@ name: warehouse_env
 version: "0.1.0"
 description: "Warehouse Load Distribution Environment"
 
-author: "Your Name"
+author: "A. ASWIN"
 license: "MIT"
 
-# Task modes
+# Task modes with graders
 tasks:
-  - easy
-  - medium
-  - hard
+  - id: "easy"
+    name: "Easy Warehouse"
+    description: "Place boxes on a 2D grid (5x5). Avoid fragmentation."
+    difficulty: "easy"
+    grader: "graders.easy_grader:grade"
+
+  - id: "medium"
+    name: "Medium Warehouse"
+    description: "Place products on a 2D grid (6x6) while respecting adjacency constraints."
+    difficulty: "medium"
+    grader: "graders.medium_grader:grade"
+
+  - id: "hard"
+    name: "Hard Warehouse"
+    description: "Place products on a 3D grid (4x4x3) with safety, size, and zone constraints."
+    difficulty: "hard"
+    grader: "graders.hard_grader:grade"
 
 # Server configuration
 server:

@@ -250,7 +250,7 @@ class WarehouseEnvironment:
 
         # ── Validate position ────────────────────────────────────────
         expected_dims = 3 if self._mode == "hard" else 2
-        penalty = -0.1  # small penalty for invalid moves to guide RL agents
+        penalty = 0.01  # minimum reward for invalid moves (must be >0 for validator)
 
         if len(position) != expected_dims:
             return (
@@ -367,7 +367,8 @@ class WarehouseEnvironment:
     # ── REWARD FUNCTIONS ──────────────────────────────────────────────
 
     @staticmethod
-    def _clip(value: float, lo: float = 0.0, hi: float = 1.0) -> float:
+    def _clip(value: float, lo: float = 0.01, hi: float = 0.99) -> float:
+        """Clamp to strict open interval (0, 1) — validator requires no exact 0.0 or 1.0."""
         return max(lo, min(hi, value))
 
     # ── Easy: compactness via filled neighbors ───────────────────────

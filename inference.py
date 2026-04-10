@@ -11,8 +11,8 @@ from my_env.client import WarehouseEnv
 from my_env.models import WarehouseAction
 
 # ── Configuration ─────────────────────────────────────────────────────
-API_KEY = os.environ.get("API_KEY") or os.environ.get("HF_TOKEN")
-API_BASE_URL = os.environ.get("API_BASE_URL") or "https://router.huggingface.co/v1"
+API_BASE_URL = os.environ.get("API_BASE_URL", "https://router.huggingface.co/v1")
+API_KEY = os.environ.get("API_KEY") or os.environ.get("HF_TOKEN", "dummy_key")
 MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
 TASK_NAME = os.environ.get("WAREHOUSE_TASK", "easy")
 BENCHMARK = "warehouse_env"
@@ -60,8 +60,7 @@ def get_action_llm(client: OpenAI, obs: dict) -> list:
 async def run_episode():
     # 1. Initialize Client
     if not API_KEY or not API_BASE_URL:
-        print("[ERROR] Missing API_KEY or API_BASE_URL")
-        return
+        print("[WARN] API_KEY or API_BASE_URL looks empty; proceeding anyway")
 
     client = OpenAI(api_key=API_KEY, base_url=API_BASE_URL)
 
